@@ -1,4 +1,4 @@
-package com.example.Task5.student;
+package com.example.universitysystem.student;
 
 
 import org.springframework.boot.CommandLineRunner;

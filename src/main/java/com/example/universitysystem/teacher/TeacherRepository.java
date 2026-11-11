@@ -1,4 +1,4 @@
-package com.example.Task5.teacher;
+package com.example.universitysystem.teacher;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

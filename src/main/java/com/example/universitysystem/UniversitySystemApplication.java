@@ -1,14 +1,14 @@
-package com.example.Task5;
+package com.example.universitysystem;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 //@RestController
-public class Task5Application {
+public class UniversitySystemApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(Task5Application.class, args);
+		SpringApplication.run(UniversitySystemApplication.class, args);
 	}
 
 

@@ -1,4 +1,4 @@
-package com.example.Task5.teacher;
+package com.example.universitysystem.teacher;
 
 import org.springframework.web.bind.annotation.*;
 import java.util.List;

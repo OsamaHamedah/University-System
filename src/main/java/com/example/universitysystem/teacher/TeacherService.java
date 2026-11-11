@@ -1,4 +1,4 @@
-package com.example.Task5.teacher;
+package com.example.universitysystem.teacher;
 
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
