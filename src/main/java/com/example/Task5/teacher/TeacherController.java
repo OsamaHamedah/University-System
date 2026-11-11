@@ -30,9 +30,11 @@ public class TeacherController {
 
     @PutMapping(path = "{teacherId}")
     public void updateTeacher(@PathVariable("teacherId") Long teacherId,
+                              @RequestBody Teacher teacher)
+                              /*
                               @RequestParam(required = false) String name,
                               @RequestParam(required = false) String email,
-                              @RequestParam(required = false) String department) {
-        teacherService.updateTeacher(teacherId, name, email, department);
+                              @RequestParam(required = false) String department) */{
+        teacherService.updateTeacher(teacherId, teacher);
     }
 }

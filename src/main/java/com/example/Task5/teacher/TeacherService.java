@@ -33,9 +33,13 @@ public class TeacherService {
     }
 
     @Transactional
-    public void updateTeacher(Long id, String name, String email, String department) {
+    public void updateTeacher(Long id, Teacher updatedTeacher) {
         Teacher teacher = teacherRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("Teacher with id " + id + " not found"));
+
+        String name = updatedTeacher.getName();
+        String email = updatedTeacher.getEmail();
+        String department = updatedTeacher.getDepartment();
 
         if (name != null && !name.isEmpty() && !Objects.equals(teacher.getName(), name)) {
             teacher.setName(name);
