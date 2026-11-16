@@ -17,6 +17,10 @@ public class TeacherService {
     public List<Teacher> getTeachers() {
         return teacherRepository.findAll();
     }
+    public Teacher getTeacher(Long teacherId) {
+        return teacherRepository.findById(teacherId)
+                .orElseThrow(() -> new IllegalStateException("Teacher with id " + teacherId + " not found"));
+    }
 
     public void addNewTeacher(Teacher teacher) {
         if (teacherRepository.findTeacherByEmail(teacher.getEmail()).isPresent()) {

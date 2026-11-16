@@ -20,6 +20,10 @@ public class StudentService {
     public List<Student> getStudents() {
         return studentRepository.findAll();
     }
+    public Student getStudent(Long studentId) {
+        return studentRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalStateException("Student with id " + studentId + " not found"));
+    }
 
     public void addNewStudent(Student student) {
         Optional<Student> studentOptional = studentRepository.findStudentByEmail(student.getEmail());

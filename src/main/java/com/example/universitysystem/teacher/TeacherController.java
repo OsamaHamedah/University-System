@@ -17,6 +17,10 @@ public class TeacherController {
     public List<Teacher> getTeachers() {
         return teacherService.getTeachers();
     }
+    @GetMapping(path = "{teacherId}")
+    public Teacher getTeacher(@PathVariable("teacherId") Long teacherId) {
+        return teacherService.getTeacher(teacherId);
+    }
 
     @PostMapping
     public void registerNewTeacher(@RequestBody Teacher teacher) {
