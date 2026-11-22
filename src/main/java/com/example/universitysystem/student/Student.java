@@ -1,5 +1,10 @@
 package com.example.universitysystem.student;
 
+import com.example.universitysystem.department.Department;
+import com.example.universitysystem.offeredclass.OfferedClass;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.HashSet;
+import java.util.Set;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.Period;
@@ -16,6 +21,14 @@ public class Student {
     private LocalDate dob;
     @Transient
     private Integer age;
+
+    @ManyToOne
+    @JoinColumn(name = "department_id")
+    private Department department;
+
+    @ManyToMany(mappedBy = "students")
+    @JsonIgnore
+    private Set<OfferedClass> offeredClasses = new HashSet<>();
 
     public Student() {
     }
@@ -81,6 +94,14 @@ public class Student {
     public void setAge(Integer age) {
         this.age = age;
     }
+
+    public Department getDepartment() { return department; }
+
+    public void setDepartment(Department department) { this.department = department; }
+
+    public Set<OfferedClass> getOfferedClasses() { return offeredClasses; }
+
+    public void setOfferedClasses(Set<OfferedClass> offeredClasses) { this.offeredClasses = offeredClasses; }
 
     @Override
     public String toString() {

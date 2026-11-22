@@ -1,5 +1,6 @@
 package com.example.universitysystem.teacher;
 
+import com.example.universitysystem.department.Department;
 import jakarta.persistence.*;
 
 @Entity
@@ -10,11 +11,15 @@ public class Teacher {
     private Long id;
     private String name;
     private String email;
-    private String department;
+    //private String department;
+
+    @ManyToOne
+    @JoinColumn(name = "department_id")
+    private Department department;
 
     public Teacher() {}
 
-    public Teacher(String name, String email, String department) {
+    public Teacher(String name, String email, Department department) {
         this.name = name;
         this.email = email;
         this.department = department;
@@ -26,6 +31,6 @@ public class Teacher {
     public void setName(String name) { this.name = name; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-    public String getDepartment() { return department; }
-    public void setDepartment(String department) { this.department = department; }
+    public Department getDepartment() { return department; }
+    public void setDepartment(Department department) { this.department = department; }
 }
