@@ -9,40 +9,42 @@ import com.example.universitysystem.teacher.TeacherRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
 @Service
+@Transactional
 public class OfferedClassService {
 
     private final OfferedClassRepository offeredClassRepository;
     private final CourseRepository courseRepository;
     private final TeacherRepository teacherRepository;
     private final StudentRepository studentRepository;
+    private final OfferedClassMapper offeredClassMapper;
 
     public OfferedClassService(OfferedClassRepository offeredClassRepository,
                                CourseRepository courseRepository,
                                TeacherRepository teacherRepository,
-                               StudentRepository studentRepository) {
+                               StudentRepository studentRepository,
+                               OfferedClassMapper offeredClassMapper) {
         this.offeredClassRepository = offeredClassRepository;
         this.courseRepository = courseRepository;
         this.teacherRepository = teacherRepository;
         this.studentRepository = studentRepository;
+        this.offeredClassMapper = offeredClassMapper;
     }
 
-    public List<OfferedClass> getOfferedClasses() {
-        return offeredClassRepository.findAll();
+    public List<OfferedClassResponseDto> getOfferedClasses() {
+        return offeredClassRepository.findAll().stream().map(offeredClassMapper::toResponse).toList();
     }
 
-    public OfferedClass getOfferedClass(Long offeredClassId) {
-        return offeredClassRepository.findById(offeredClassId)
-                .orElseThrow(() -> new IllegalStateException("Offered class with id " + offeredClassId + " not found"));
+    public OfferedClassResponseDto getOfferedClass(Long offeredClassId) {
+        return offeredClassMapper.toResponse(findOfferedClass(offeredClassId));
     }
 
-    public void addNewOfferedClass(OfferedClass offeredClass) {
-        Course course = resolveCourse(offeredClass.getCourse());
-        Teacher teacher = resolveTeacher(offeredClass.getTeacher());
+    public OfferedClassResponseDto addNewOfferedClass(OfferedClassRequestDto request) {
+        Course course = resolveCourse(request.courseId());
+        Teacher teacher = resolveTeacher(request.teacherId());
         if (course == null) {
             throw new IllegalStateException("Course is required");
         }
@@ -50,13 +52,11 @@ public class OfferedClassService {
             throw new IllegalStateException("Teacher is required");
         }
         if (offeredClassRepository.existsByCourseIdAndSemesterAndSection(
-                course.getId(), offeredClass.getSemester(), offeredClass.getSection())) {
+                course.getId(), request.semester(), request.section())) {
             throw new IllegalStateException("This course is already offered for that semester and section");
         }
-        offeredClass.setCourse(course);
-        offeredClass.setTeacher(teacher);
-        offeredClass.setStudents(new HashSet<>());
-        offeredClassRepository.save(offeredClass);
+        OfferedClass saved = offeredClassRepository.save(offeredClassMapper.toEntity(request, course, teacher));
+        return offeredClassMapper.toResponse(saved);
     }
 
     public void deleteOfferedClass(Long offeredClassId) {
@@ -66,40 +66,38 @@ public class OfferedClassService {
         offeredClassRepository.deleteById(offeredClassId);
     }
 
-    @Transactional
-    public void updateOfferedClass(Long offeredClassId, OfferedClass updated) {
-        OfferedClass offeredClass = getOfferedClass(offeredClassId);
+    public OfferedClassResponseDto updateOfferedClass(Long offeredClassId, OfferedClassRequestDto request) {
+        OfferedClass offeredClass = findOfferedClass(offeredClassId);
 
-        if (updated.getSemester() != null && !updated.getSemester().isEmpty()
-                && !Objects.equals(offeredClass.getSemester(), updated.getSemester())) {
-            offeredClass.setSemester(updated.getSemester());
+        if (request.semester() != null && !request.semester().isEmpty()
+                && !Objects.equals(offeredClass.getSemester(), request.semester())) {
+            offeredClass.setSemester(request.semester());
         }
-        if (updated.getSection() != null && !updated.getSection().isEmpty()
-                && !Objects.equals(offeredClass.getSection(), updated.getSection())) {
-            offeredClass.setSection(updated.getSection());
+        if (request.section() != null && !request.section().isEmpty()
+                && !Objects.equals(offeredClass.getSection(), request.section())) {
+            offeredClass.setSection(request.section());
         }
-        if (updated.getCapacity() != null && !Objects.equals(offeredClass.getCapacity(), updated.getCapacity())) {
-            offeredClass.setCapacity(updated.getCapacity());
+        if (request.capacity() != null && !Objects.equals(offeredClass.getCapacity(), request.capacity())) {
+            offeredClass.setCapacity(request.capacity());
         }
-        if (updated.getSchedule() != null && !updated.getSchedule().isEmpty()
-                && !Objects.equals(offeredClass.getSchedule(), updated.getSchedule())) {
-            offeredClass.setSchedule(updated.getSchedule());
+        if (request.schedule() != null && !request.schedule().isEmpty()
+                && !Objects.equals(offeredClass.getSchedule(), request.schedule())) {
+            offeredClass.setSchedule(request.schedule());
         }
-        Course course = resolveCourse(updated.getCourse());
+        Course course = resolveCourse(request.courseId());
         if (course != null) {
             offeredClass.setCourse(course);
         }
-        Teacher teacher = resolveTeacher(updated.getTeacher());
+        Teacher teacher = resolveTeacher(request.teacherId());
         if (teacher != null) {
             offeredClass.setTeacher(teacher);
         }
+        return offeredClassMapper.toResponse(offeredClass);
     }
 
-    @Transactional
-    public void enrollStudent(Long offeredClassId, Long studentId) {
-        OfferedClass offeredClass = getOfferedClass(offeredClassId);
-        Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalStateException("Student with id " + studentId + " not found"));
+    public OfferedClassResponseDto enrollStudent(Long offeredClassId, Long studentId) {
+        OfferedClass offeredClass = findOfferedClass(offeredClassId);
+        Student student = findStudent(studentId);
 
         if (offeredClass.getStudents().contains(student)) {
             throw new IllegalStateException("Student is already enrolled in this class");
@@ -108,32 +106,42 @@ public class OfferedClassService {
             throw new IllegalStateException("Class is full");
         }
         offeredClass.getStudents().add(student);
+        return offeredClassMapper.toResponse(offeredClass);
     }
 
-    @Transactional
-    public void removeStudent(Long offeredClassId, Long studentId) {
-        OfferedClass offeredClass = getOfferedClass(offeredClassId);
-        Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalStateException("Student with id " + studentId + " not found"));
+    public OfferedClassResponseDto removeStudent(Long offeredClassId, Long studentId) {
+        OfferedClass offeredClass = findOfferedClass(offeredClassId);
+        Student student = findStudent(studentId);
 
         if (!offeredClass.getStudents().remove(student)) {
             throw new IllegalStateException("Student is not enrolled in this class");
         }
+        return offeredClassMapper.toResponse(offeredClass);
     }
 
-    private Course resolveCourse(Course course) {
-        if (course == null || course.getId() == null) {
-            return null;
-        }
-        return courseRepository.findById(course.getId())
-                .orElseThrow(() -> new IllegalStateException("Course with id " + course.getId() + " not found"));
+    private OfferedClass findOfferedClass(Long offeredClassId) {
+        return offeredClassRepository.findById(offeredClassId)
+                .orElseThrow(() -> new IllegalStateException("Offered class with id " + offeredClassId + " not found"));
     }
 
-    private Teacher resolveTeacher(Teacher teacher) {
-        if (teacher == null || teacher.getId() == null) {
+    private Student findStudent(Long studentId) {
+        return studentRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalStateException("Student with id " + studentId + " not found"));
+    }
+
+    private Course resolveCourse(Long courseId) {
+        if (courseId == null) {
             return null;
         }
-        return teacherRepository.findById(teacher.getId())
-                .orElseThrow(() -> new IllegalStateException("Teacher with id " + teacher.getId() + " not found"));
+        return courseRepository.findById(courseId)
+                .orElseThrow(() -> new IllegalStateException("Course with id " + courseId + " not found"));
+    }
+
+    private Teacher resolveTeacher(Long teacherId) {
+        if (teacherId == null) {
+            return null;
+        }
+        return teacherRepository.findById(teacherId)
+                .orElseThrow(() -> new IllegalStateException("Teacher with id " + teacherId + " not found"));
     }
 }

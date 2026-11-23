@@ -1,6 +1,6 @@
 package com.example.universitysystem.student;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,41 +11,34 @@ public class StudentController {
 
     private final StudentService studentService;
 
-    @Autowired
     public StudentController(StudentService studentService) {
         this.studentService = studentService;
     }
 
     @GetMapping
-    public List<Student> getStudents() {
+    public List<StudentResponseDto> getStudents() {
         return studentService.getStudents();
     }
+
     @GetMapping(path = "{studentId}")
-    public Student getStudent(@PathVariable("studentId") Long studentId) {
+    public StudentResponseDto getStudent(@PathVariable("studentId") Long studentId) {
         return studentService.getStudent(studentId);
     }
 
     @PostMapping
-    public void registerNewStudent(@RequestBody Student student){
-        studentService.addNewStudent(student);
-
+    @ResponseStatus(HttpStatus.CREATED)
+    public StudentResponseDto registerNewStudent(@RequestBody StudentRequestDto request) {
+        return studentService.addNewStudent(request);
     }
 
-    @DeleteMapping(path= "{studentId}")
-    public void deleteStudent(
-            @PathVariable ("studentId") Long studentId)
-    {
+    @PutMapping(path = "{studentId}")
+    public StudentResponseDto updateStudent(@PathVariable("studentId") Long studentId,
+                                            @RequestBody StudentRequestDto request) {
+        return studentService.updateStudent(studentId, request);
+    }
+
+    @DeleteMapping(path = "{studentId}")
+    public void deleteStudent(@PathVariable("studentId") Long studentId) {
         studentService.deleteStudent(studentId);
-    }
-
-    @PutMapping(path= "{studentId}")
-    public void updateStudent(
-            @PathVariable ("studentId") Long studentId,
-            @RequestBody Student student
-            /* @RequestParam(required = false) String name,
-            @RequestParam(required = false) String email */
-    )
-    {
-        studentService.updateStudent(studentId, student);
     }
 }

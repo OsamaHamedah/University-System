@@ -6,6 +6,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -15,46 +16,47 @@ public class StudentService {
 
     private final StudentRepository studentRepository;
     private final DepartmentRepository departmentRepository;
+    private final StudentMapper studentMapper;
 
-    @Autowired
-    public StudentService(StudentRepository studentRepository, DepartmentRepository departmentRepository) {
+    public StudentService(StudentRepository studentRepository,
+                          DepartmentRepository departmentRepository,
+                          StudentMapper studentMapper) {
         this.studentRepository = studentRepository;
         this.departmentRepository = departmentRepository;
+        this.studentMapper = studentMapper;
     }
 
-    public List<Student> getStudents() {
-        return studentRepository.findAll();
+    public List<StudentResponseDto> getStudents() {
+        return studentRepository.findAll().stream().map(studentMapper::toResponse).toList();
     }
 
-    public Student getStudent(Long studentId) {
-        return studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalStateException("Student with id " + studentId + " not found"));
+    public StudentResponseDto getStudent(Long studentId) {
+        return studentMapper.toResponse(findStudent(studentId));
     }
 
-    public void addNewStudent(Student student) {
-        Optional<Student> studentOptional = studentRepository.findStudentByEmail(student.getEmail());
-        if (studentOptional.isPresent()) {
+    public StudentResponseDto addNewStudent(StudentRequestDto request) {
+        if (studentRepository.findStudentByEmail(request.email()).isPresent()) {
             throw new IllegalStateException("Email is taken");
         }
-        student.setDepartment(resolveDepartment(student.getDepartment()));
-        studentRepository.save(student);
+        Department department = resolveDepartment(request.departmentId());
+        Student saved = studentRepository.save(studentMapper.toEntity(request, department));
+        return studentMapper.toResponse(saved);
     }
 
     public void deleteStudent(Long studentId) {
-        boolean exists = studentRepository.existsById(studentId);
-        if (!exists) {
+        if (!studentRepository.existsById(studentId)) {
             throw new IllegalStateException("Student with id " + studentId + " not found");
         }
         studentRepository.deleteById(studentId);
     }
 
     @Transactional
-    public void updateStudent(Long studentId, Student updatedStudent) {
-        Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalStateException("Student with id " + studentId + " not found"));
+    public StudentResponseDto updateStudent(Long studentId, StudentRequestDto request) {
+        Student student = findStudent(studentId);
 
-        String name = updatedStudent.getName();
-        String email = updatedStudent.getEmail();
+        String name = request.name();
+        String email = request.email();
+        LocalDate dob = request.dob();
 
         if (name != null && !name.isEmpty() && !Objects.equals(student.getName(), name)) {
             student.setName(name);
@@ -66,18 +68,26 @@ public class StudentService {
             }
             student.setEmail(email);
         }
-        Department department = resolveDepartment(updatedStudent.getDepartment());
+        if (dob != null) {
+            student.setDob(dob);
+        }
+        Department department = resolveDepartment(request.departmentId());
         if (department != null) {
             student.setDepartment(department);
         }
+        return studentMapper.toResponse(student);
     }
 
+    private Student findStudent(Long studentId) {
+        return studentRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalStateException("Student with id " + studentId + " not found"));
+    }
 
-    private Department resolveDepartment(Department department) {
-        if (department == null || department.getId() == null) {
+    private Department resolveDepartment(Long departmentId) {
+        if (departmentId == null) {
             return null;
         }
-        return departmentRepository.findById(department.getId())
-                .orElseThrow(() -> new IllegalStateException("Department with id " + department.getId() + " not found"));
+        return departmentRepository.findById(departmentId)
+                .orElseThrow(() -> new IllegalStateException("Department with id " + departmentId + " not found"));
     }
 }

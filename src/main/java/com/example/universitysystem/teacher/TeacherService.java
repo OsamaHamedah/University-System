@@ -13,43 +13,44 @@ public class TeacherService {
 
     private final TeacherRepository teacherRepository;
     private final DepartmentRepository departmentRepository;
+    private final TeacherMapper teacherMapper;
 
-    public TeacherService(TeacherRepository teacherRepository, DepartmentRepository departmentRepository) {
+    public TeacherService(TeacherRepository teacherRepository, DepartmentRepository departmentRepository, TeacherMapper teacherMapper) {
         this.teacherRepository = teacherRepository;
         this.departmentRepository = departmentRepository;
+        this.teacherMapper = teacherMapper;
     }
 
-    public List<Teacher> getTeachers() {
-        return teacherRepository.findAll();
+    public List<TeacherResponseDto> getTeachers() {
+        return teacherRepository.findAll().stream().map(teacherMapper::toResponse).toList();
     }
 
-    public Teacher getTeacher(Long teacherId) {
-        return teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new IllegalStateException("Teacher with id " + teacherId + " not found"));
+    public TeacherResponseDto getTeacher(Long teacherId) {
+        return teacherMapper.toResponse(findTeacher(teacherId));
     }
 
-    public void addNewTeacher(Teacher teacher) {
-        if (teacherRepository.findTeacherByEmail(teacher.getEmail()).isPresent()) {
+    public TeacherResponseDto addNewTeacher(TeacherRequestDto request) {
+        if (teacherRepository.findTeacherByEmail(request.email()).isPresent()) {
             throw new IllegalStateException("Email is taken");
         }
-        teacher.setDepartment(resolveDepartment(teacher.getDepartment()));
-        teacherRepository.save(teacher);
+        Department department = resolveDepartment(request.departmentId());
+        Teacher saved = teacherRepository.save(teacherMapper.toEntity(request, department));
+        return teacherMapper.toResponse(saved);
     }
 
-    public void deleteTeacher(Long id) {
-        if (!teacherRepository.existsById(id)) {
-            throw new IllegalStateException("Teacher with id " + id + " not found");
+    public void deleteTeacher(Long teacherId) {
+        if (!teacherRepository.existsById(teacherId)) {
+            throw new IllegalStateException("Teacher with id " + teacherId + " not found");
         }
-        teacherRepository.deleteById(id);
+        teacherRepository.deleteById(teacherId);
     }
 
     @Transactional
-    public void updateTeacher(Long id, Teacher updatedTeacher) {
-        Teacher teacher = teacherRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException("Teacher with id " + id + " not found"));
+    public TeacherResponseDto updateTeacher(Long teacherId, TeacherRequestDto request) {
+        Teacher teacher = findTeacher(teacherId);
 
-        String name = updatedTeacher.getName();
-        String email = updatedTeacher.getEmail();
+        String name = request.name();
+        String email = request.email();
 
         if (name != null && !name.isEmpty() && !Objects.equals(teacher.getName(), name)) {
             teacher.setName(name);
@@ -60,17 +61,23 @@ public class TeacherService {
             }
             teacher.setEmail(email);
         }
-        Department department = resolveDepartment(updatedTeacher.getDepartment());
+        Department department = resolveDepartment(request.departmentId());
         if (department != null) {
             teacher.setDepartment(department);
         }
+        return teacherMapper.toResponse(teacher);
     }
 
-    private Department resolveDepartment(Department department) {
-        if (department == null || department.getId() == null) {
+    private Teacher findTeacher(Long teacherId) {
+        return teacherRepository.findById(teacherId)
+                .orElseThrow(() -> new IllegalStateException("Teacher with id " + teacherId + " not found"));
+    }
+
+    private Department resolveDepartment(Long departmentId) {
+        if (departmentId == null) {
             return null;
         }
-        return departmentRepository.findById(department.getId())
-                .orElseThrow(() -> new IllegalStateException("Department with id " + department.getId() + " not found"));
+        return departmentRepository.findById(departmentId)
+                .orElseThrow(() -> new IllegalStateException("Department with id " + departmentId + " not found"));
     }
 }

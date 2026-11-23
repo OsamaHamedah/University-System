@@ -87,11 +87,18 @@ public class Student {
         this.dob = dob;
     }
 
+    /* public Integer getAge() {
+        return Period.between(this.dob, LocalDate.now()).getYears();
+    } */
+
     public Integer getAge() {
+        if (this.dob == null) {
+            return null;
+        }
         return Period.between(this.dob, LocalDate.now()).getYears();
     }
 
-    public void setAge(Integer age) {
+     public void setAge(Integer age) {
         this.age = age;
     }
 

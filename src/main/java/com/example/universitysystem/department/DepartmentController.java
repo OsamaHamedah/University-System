@@ -1,5 +1,6 @@
 package com.example.universitysystem.department;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -14,25 +15,29 @@ public class DepartmentController {
     }
 
     @GetMapping
-    public List<Department> getDepartments() {
+    public List<DepartmentResponseDto> getDepartments() {
         return departmentService.getDepartments();
     }
+
     @GetMapping(path = "{departmentId}")
-    public Department getDepartment(@PathVariable("departmentId") Long departmentId) {
+    public DepartmentResponseDto getDepartment(@PathVariable("departmentId") Long departmentId) {
         return departmentService.getDepartment(departmentId);
     }
+
     @PostMapping
-    public void registerNewDepartment(@RequestBody Department department) {
-        departmentService.addNewDepartment(department);
+    @ResponseStatus(HttpStatus.CREATED)
+    public DepartmentResponseDto registerNewDepartment(@RequestBody DepartmentRequestDto request) {
+        return departmentService.addNewDepartment(request);
+    }
+
+    @PutMapping(path = "{departmentId}")
+    public DepartmentResponseDto updateDepartment(@PathVariable("departmentId") Long departmentId,
+                                                  @RequestBody DepartmentRequestDto request) {
+        return departmentService.updateDepartment(departmentId, request);
     }
 
     @DeleteMapping(path = "{departmentId}")
     public void deleteDepartment(@PathVariable("departmentId") Long departmentId) {
         departmentService.deleteDepartment(departmentId);
     }
-    @PutMapping(path = "{departmentId}")
-    public void updateDepartment(@PathVariable("departmentId") Long departmentId, @RequestBody Department department) {
-        departmentService.updateDepartment(departmentId, department);
-    }
-
 }

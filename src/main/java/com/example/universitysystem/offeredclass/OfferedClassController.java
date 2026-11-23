@@ -1,5 +1,6 @@
 package com.example.universitysystem.offeredclass;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,24 +16,25 @@ public class OfferedClassController {
     }
 
     @GetMapping
-    public List<OfferedClass> getOfferedClasses() {
+    public List<OfferedClassResponseDto> getOfferedClasses() {
         return offeredClassService.getOfferedClasses();
     }
 
     @GetMapping(path = "{offeredClassId}")
-    public OfferedClass getOfferedClass(@PathVariable("offeredClassId") Long offeredClassId) {
+    public OfferedClassResponseDto getOfferedClass(@PathVariable("offeredClassId") Long offeredClassId) {
         return offeredClassService.getOfferedClass(offeredClassId);
     }
 
     @PostMapping
-    public void registerNewOfferedClass(@RequestBody OfferedClass offeredClass) {
-        offeredClassService.addNewOfferedClass(offeredClass);
+    @ResponseStatus(HttpStatus.CREATED)
+    public OfferedClassResponseDto registerNewOfferedClass(@RequestBody OfferedClassRequestDto request) {
+        return offeredClassService.addNewOfferedClass(request);
     }
 
     @PutMapping(path = "{offeredClassId}")
-    public void updateOfferedClass(@PathVariable("offeredClassId") Long offeredClassId,
-                                   @RequestBody OfferedClass offeredClass) {
-        offeredClassService.updateOfferedClass(offeredClassId, offeredClass);
+    public OfferedClassResponseDto updateOfferedClass(@PathVariable("offeredClassId") Long offeredClassId,
+                                                      @RequestBody OfferedClassRequestDto request) {
+        return offeredClassService.updateOfferedClass(offeredClassId, request);
     }
 
     @DeleteMapping(path = "{offeredClassId}")
@@ -41,14 +43,14 @@ public class OfferedClassController {
     }
 
     @PutMapping(path = "{offeredClassId}/students/{studentId}")
-    public void enrollStudent(@PathVariable("offeredClassId") Long offeredClassId,
-                              @PathVariable("studentId") Long studentId) {
-        offeredClassService.enrollStudent(offeredClassId, studentId);
+    public OfferedClassResponseDto enrollStudent(@PathVariable("offeredClassId") Long offeredClassId,
+                                                 @PathVariable("studentId") Long studentId) {
+        return offeredClassService.enrollStudent(offeredClassId, studentId);
     }
 
     @DeleteMapping(path = "{offeredClassId}/students/{studentId}")
-    public void removeStudent(@PathVariable("offeredClassId") Long offeredClassId,
-                              @PathVariable("studentId") Long studentId) {
-        offeredClassService.removeStudent(offeredClassId, studentId);
+    public OfferedClassResponseDto removeStudent(@PathVariable("offeredClassId") Long offeredClassId,
+                                                 @PathVariable("studentId") Long studentId) {
+        return offeredClassService.removeStudent(offeredClassId, studentId);
     }
 }

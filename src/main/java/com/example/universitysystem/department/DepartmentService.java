@@ -9,25 +9,27 @@ import java.util.Objects;
 @Service
 public class DepartmentService {
     private final DepartmentRepository departmentRepository;
+    private final DepartmentMapper departmentMapper;
 
-    public DepartmentService(DepartmentRepository departmentRepository) {
+    public DepartmentService(DepartmentRepository departmentRepository, DepartmentMapper departmentMapper) {
         this.departmentRepository = departmentRepository;
+        this.departmentMapper = departmentMapper;
     }
 
-    public List<Department> getDepartments() {
-        return departmentRepository.findAll();
+    public List<DepartmentResponseDto> getDepartments() {
+        return departmentRepository.findAll().stream().map(departmentMapper::toResponse).toList();
     }
 
-    public Department getDepartment(Long departmentId) {
-        return departmentRepository.findById(departmentId)
-                .orElseThrow(() -> new IllegalStateException("Department with id " + departmentId + " not found"));
+    public DepartmentResponseDto getDepartment(Long departmentId) {
+        return departmentMapper.toResponse(findDepartment(departmentId));
     }
 
-    public void addNewDepartment(Department department) {
-        if(departmentRepository.findDepartmentByName(department.getName()).isPresent()) {
-            throw new IllegalStateException("Department with name " + department.getName() + " already exists");
+    public DepartmentResponseDto addNewDepartment(DepartmentRequestDto request) {
+        if (departmentRepository.findDepartmentByName(request.name()).isPresent()) {
+            throw new IllegalStateException("Department with name " + request.name() + " already exists");
         }
-        departmentRepository.save(department);
+        Department saved = departmentRepository.save(departmentMapper.toEntity(request));
+        return departmentMapper.toResponse(saved);
     }
 
     public void deleteDepartment(Long departmentId) {
@@ -38,11 +40,11 @@ public class DepartmentService {
     }
 
     @Transactional
-    public void updateDepartment(Long departmentId, Department updatedDepartment) {
-        Department department = departmentRepository.findById(departmentId)
-                .orElseThrow(() -> new IllegalStateException("Department with id " + departmentId + " not found"));
-        String name = updatedDepartment.getName();
-        String location = updatedDepartment.getLocation();
+    public DepartmentResponseDto updateDepartment(Long departmentId, DepartmentRequestDto request) {
+        Department department = findDepartment(departmentId);
+
+        String name = request.name();
+        String location = request.location();
 
         if (location != null && !location.isEmpty() && !Objects.equals(department.getLocation() , location)) {
             department.setLocation(location);
@@ -52,9 +54,11 @@ public class DepartmentService {
                 throw new IllegalStateException("Department with name " + name + " already exists");
             }
             department.setName(name);
-
         }
-
+        return departmentMapper.toResponse(department);
     }
-
+    private Department findDepartment(Long departmentId) {
+        return departmentRepository.findById(departmentId)
+                .orElseThrow(() -> new IllegalStateException("Department with id " + departmentId + " not found"));
+    }
 }

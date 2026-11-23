@@ -1,5 +1,6 @@
 package com.example.universitysystem.teacher;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -14,31 +15,24 @@ public class TeacherController {
     }
 
     @GetMapping
-    public List<Teacher> getTeachers() {
+    public List<TeacherResponseDto> getTeachers() {
         return teacherService.getTeachers();
     }
+
     @GetMapping(path = "{teacherId}")
-    public Teacher getTeacher(@PathVariable("teacherId") Long teacherId) {
-        return teacherService.getTeacher(teacherId);
+    @ResponseStatus(HttpStatus.CREATED)
+    public TeacherResponseDto registerNewTeacher(@RequestBody TeacherRequestDto request) {
+        return teacherService.addNewTeacher(request);
     }
 
-    @PostMapping
-    public void registerNewTeacher(@RequestBody Teacher teacher) {
-        teacherService.addNewTeacher(teacher);
+    @PutMapping(path = "{teacherId}")
+    public TeacherResponseDto updateTeacher(@PathVariable("teacherId") Long teacherId,
+                                            @RequestBody TeacherRequestDto request) {
+        return teacherService.updateTeacher(teacherId, request);
     }
 
     @DeleteMapping(path = "{teacherId}")
     public void deleteTeacher(@PathVariable("teacherId") Long teacherId) {
         teacherService.deleteTeacher(teacherId);
-    }
-
-    @PutMapping(path = "{teacherId}")
-    public void updateTeacher(@PathVariable("teacherId") Long teacherId,
-                              @RequestBody Teacher teacher)
-                              /*
-                              @RequestParam(required = false) String name,
-                              @RequestParam(required = false) String email,
-                              @RequestParam(required = false) String department) */{
-        teacherService.updateTeacher(teacherId, teacher);
     }
 }
