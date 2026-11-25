@@ -41,16 +41,4 @@ public class OfferedClassController {
     public void deleteOfferedClass(@PathVariable("offeredClassId") Long offeredClassId) {
         offeredClassService.deleteOfferedClass(offeredClassId);
     }
-
-    @PutMapping(path = "{offeredClassId}/students/{studentId}")
-    public OfferedClassResponseDto enrollStudent(@PathVariable("offeredClassId") Long offeredClassId,
-                                                 @PathVariable("studentId") Long studentId) {
-        return offeredClassService.enrollStudent(offeredClassId, studentId);
-    }
-
-    @DeleteMapping(path = "{offeredClassId}/students/{studentId}")
-    public OfferedClassResponseDto removeStudent(@PathVariable("offeredClassId") Long offeredClassId,
-                                                 @PathVariable("studentId") Long studentId) {
-        return offeredClassService.removeStudent(offeredClassId, studentId);
-    }
 }

@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
 
@@ -24,6 +25,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiError> handleIllegalState(IllegalStateException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT,
+                "The operation conflicts with related data (the record is still referenced elsewhere)", request);
     }
 
     private ResponseEntity<ApiError> build(HttpStatus status, String message, HttpServletRequest request) {

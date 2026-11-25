@@ -19,7 +19,11 @@ public class TeacherController {
         return teacherService.getTeachers();
     }
 
-    //@GetMapping(path = "{teacherId}")
+    @GetMapping(path = "{teacherId}")
+    public TeacherResponseDto getTeacher(@PathVariable("teacherId") Long teacherId) {
+        return teacherService.getTeacher(teacherId);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TeacherResponseDto registerNewTeacher(@RequestBody TeacherRequestDto request) {
